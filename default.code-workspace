@@ -1,0 +1,4 @@
+{
+  "folders": [{ "name": "factory-sim", "path": "." }],
+  "settings": { "git.ignoreLimitWarning": true }
+}
