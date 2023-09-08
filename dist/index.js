@@ -1,6 +1,11 @@
 import App from "./app.js";
 import terminate from "./terminate.js";
-const context = {};
+import { Furnace } from "./factory.js";
+const furnace = new Furnace();
+furnace.start(1000);
+const context = {
+    furnace
+};
 const app = new App(context, 3200);
 app.start();
 const exitHandler = terminate(app.server, {

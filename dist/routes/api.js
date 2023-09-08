@@ -24,8 +24,36 @@ export default class Api {
             console.log("Time: ", Date.now());
             next();
         });
-        this.router.post("/call", async function (req, res) {
+        this.router.get("/heater/:action", async function (req, res) {
             try {
+                const appContext = req.appContext;
+                if (req.params.action == "start") {
+                    appContext.furnace.setHeater(500);
+                }
+                else if (req.params.action == "stop") {
+                    appContext.furnace.stopHeater();
+                }
+                res.send("OK");
+            }
+            catch (error) {
+                res.status(400).send("Error");
+            }
+        });
+        this.router.get("/furnace/:action", async function (req, res) {
+            try {
+                const appContext = req.appContext;
+                if (req.params.action == "open") {
+                    appContext.furnace.openFurnace();
+                }
+                else if (req.params.action == "close") {
+                    appContext.furnace.closeFurnace();
+                }
+                else if (req.params.action == "load") {
+                    appContext.furnace.startLoadingFurnaceProcedure();
+                }
+                else if (req.params.action == "unload") {
+                    appContext.furnace.startUnloadingFurnaceProcedure();
+                }
                 res.send("OK");
             }
             catch (error) {

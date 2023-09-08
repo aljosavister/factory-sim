@@ -1,0 +1,1 @@
+{"version":3,"file":"hub-input.js","sourceRoot":"","sources":["../../src/hub/hub-input.ts"],"names":[],"mappings":"AAKA,MAAM,CAAC,OAAO,OAAO,QAAQ;IACpB,MAAM,CAAC,iBAAiB,CAAC,KAAa,EAAE,KAAa;QAC1D,MAAM,WAAW,GAAG,IAAI,CAAC,KAAK,CAAC,KAAK,CAAC,CAAC;QACtC,OAAO,EAAC,OAAO,EAAE,WAAW,EAAE,KAAK,EAAC,CAAC;IACvC,CAAC;CACF"}

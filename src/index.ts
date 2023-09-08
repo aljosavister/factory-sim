@@ -6,11 +6,13 @@ import { AppContext } from "./app-context.js";
 import terminate from "./terminate.js";
 import { Furnace } from "./factory.js";
 
+
+
 /**
  * Create furnace
  */
 const furnace = new Furnace();
-furnace.start();
+furnace.start(1000);
 
 /**
  * Express http server
@@ -20,6 +22,8 @@ const context: AppContext = {
 };
 const app = new App(context, 3200);
 app.start();
+
+
 
 
 /**
