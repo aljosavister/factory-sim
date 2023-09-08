@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Env {
+export default class Env {
     getEnv() {
         return JSON.stringify(process.env);
     }
@@ -8,5 +6,4 @@ class Env {
         return JSON.stringify(process.argv);
     }
 }
-exports.default = Env;
 //# sourceMappingURL=env.js.map
