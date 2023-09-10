@@ -4,9 +4,12 @@ export class Furnace {
     furnace;
     mqttLocalhost;
     constructor() {
-        this.mqttLocalhost = new HubProxy("localhost:1883");
+        this.mqttLocalhost = new HubProxy("141.147.15.105:1883");
         this.furnace = {
             timestamp: new Date(),
+            shift: "Dopoldanska izmena",
+            furnaceTemperatureArr: [{ x: 0, y: 0 }],
+            workers: "Janez, Miha, Stanko",
             heaterTemperature: 30,
             outsideTemperature: 30,
             loadingFurnace: false,
@@ -14,6 +17,7 @@ export class Furnace {
             unloadingFurnace: false,
             currentUnloadingTime: 0,
             heaterPower: false,
+            lastOee: 0,
             sensors: {
                 furnaceTemperature: 30,
                 consumption: 0,
@@ -23,8 +27,8 @@ export class Furnace {
             charge: {
                 id: "",
                 optimalTemperatures: [
-                    [0, 200],
-                    [60000, 250]
+                    [0, 210],
+                    [30000, 250]
                 ]
             },
             simulator: {
@@ -42,7 +46,14 @@ export class Furnace {
     mqttReporting() {
         const sensors = this.furnace.sensors;
         const furnace = this.furnace;
-        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/timestamp", furnace.timestamp.toUTCString());
+        const currentTime = new Date();
+        furnace.furnaceTemperatureArr.push({ x: currentTime.getTime(), y: furnace.sensors.furnaceTemperature });
+        if (furnace.furnaceTemperatureArr.length > 20)
+            furnace.furnaceTemperatureArr.shift();
+        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/timestamp", furnace.timestamp.toUTCString());
+        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/shift", furnace.shift.toString());
+        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/workers", furnace.workers.toString());
+        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/furnaceTemperatureArr", JSON.stringify(furnace.furnaceTemperatureArr));
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/furnaceTemperature", sensors.furnaceTemperature.toString());
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/consumption", sensors.consumption.toString());
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/heaterTemperature", furnace.heaterTemperature.toString());
@@ -51,14 +62,14 @@ export class Furnace {
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/heaterPower", furnace.heaterPower ? "true" : "false");
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/loadingProcedure", furnace.loadingFurnace ? "true" : "false");
         this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/unloadingProcedure", furnace.unloadingFurnace ? "true" : "false");
-        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/chargeid", furnace.charge.id.toString());
+        this.mqttLocalhost.mqttClient.publish("sij/acroni/agregat-1/edge/chargeid", furnace.charge.id.toString());
     }
     runSimulation() {
         const furnace = this.furnace;
         furnace.timestamp.setTime(furnace.timestamp.getTime() + furnace.simulator.intervalDuration);
         this.furnace.sensors.furnaceTemperature = this.simulateTemperatureSensor(furnace.heaterTemperature, furnace.sensors.furnaceTemperature, furnace.simulator.simulatedIntervalDuration);
-        this.simulateLoadFurnace(10000, furnace.simulator.simulatedIntervalDuration);
-        this.simulateUnloadFurnace(10000, furnace.simulator.simulatedIntervalDuration);
+        this.simulateLoadFurnace(5000, furnace.simulator.simulatedIntervalDuration);
+        this.simulateUnloadFurnace(5000, furnace.simulator.simulatedIntervalDuration);
         this.simulateHeaterPowerAdjustment(furnace.simulator.simulatedIntervalDuration);
     }
     setHeater(temperature) {
@@ -127,7 +138,7 @@ export class Furnace {
                     this.setHeater(50);
                 }
                 else {
-                    this.setHeater(500);
+                    this.setHeater(300);
                 }
             }
         }
@@ -139,15 +150,15 @@ export class Furnace {
             heatTransferRate = 0.1;
         }
         else {
-            heatTransferRate = 0.01;
+            heatTransferRate = 0.05;
         }
         if (this.furnace.sensors.furnaceOpened) {
             finalTemperature = (this.furnace.heaterTemperature - this.furnace.outsideTemperature) * 0.99 + this.furnace.outsideTemperature;
             if (this.furnace.heaterTemperature > this.furnace.sensors.furnaceTemperature) {
-                heatTransferRate = 0.05;
+                heatTransferRate = 0.08;
             }
             else {
-                heatTransferRate = 0.02;
+                heatTransferRate = 0.05;
             }
         }
         const temperature = this.simulateFurnaceTemperature(finalTemperature, oldTemperature, heatTransferRate, simulatedIntervalDuration);
@@ -183,6 +194,7 @@ export class Furnace {
                 this.stopHeater();
                 this.openFurnace();
                 furnace.sensors.consumption = furnace.sensors.consumption + 8;
+                furnace.lastOee = Math.random() / 2 + 0.5;
             }
             furnace.currentUnloadingTime = furnace.currentUnloadingTime + simulatedIntervalDuration;
             if (furnace.currentUnloadingTime > loadingInterval) {
